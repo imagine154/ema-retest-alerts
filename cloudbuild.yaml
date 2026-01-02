@@ -26,9 +26,10 @@ steps:
       - '--region=asia-south1'
       - '--platform=managed'
       - '--no-allow-unauthenticated'
-      - '--memory=512Mi'
-      - '--timeout=300'
+      - '--memory=1Gi'
+      - '--timeout=540'
       - '--max-instances=1'
+      - '--cpu=2'
       - '--set-secrets=TELEGRAM_BOT_TOKEN=telegram-bot-token:latest,TELEGRAM_CHAT_ID=telegram-chat-id:latest'
 
 images:
