@@ -47,8 +47,38 @@ Automated alert system that monitors Chartink.com EMA (Exponential Moving Averag
    playwright install chromium
    ```
 
-4. **Set environment variables**
+4. **Configure environment variables**
+   
+   Copy the example environment file and add your credentials:
    ```powershell
+   cp .env.example .env
+   ```
+   
+   Edit `.env` and add your Telegram credentials:
+   ```env
+   TELEGRAM_BOT_TOKEN=your_bot_token_here
+   TELEGRAM_CHAT_ID=your_chat_id_here
+   ```
+
+5. **Run the script**
+   ```powershell
+   python chartink_ema_alerts.py
+   ```
+
+## 🔐 Security
+
+- Never commit `.env` file to git (already in `.gitignore`)
+- Use `.env.example` as a template for other developers
+- For GCP deployment, credentials are stored in Secret Manager
+
+## 📝 Environment Variables
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `TELEGRAM_BOT_TOKEN` | Bot token from @BotFather | `1234567890:ABCdefGHIjklMNOpqrsTUVwxyz` |
+| `TELEGRAM_CHAT_ID` | Your chat ID from @userinfobot | `-1002343316074` |
+
+## 🧪 Testing Locally
    $env:TELEGRAM_BOT_TOKEN = "your_bot_token"
    $env:TELEGRAM_CHAT_ID = "your_chat_id"
    ```
@@ -263,5 +293,6 @@ This tool is for informational purposes only. Always do your own research before
 **Built for GCP Cloud Run** • **Python 3.11+** • **Production Ready** • **Playwright Enabled**
 
 
- < ! - -   D e p l o y e d   t o   G C P   o n   2 0 2 6 - 0 1 - 0 2   1 4 : 4 2   - - >  
+ < ! - -   D e p l o y e d   t o   G C P   o n   2 0 2 6 - 0 1 - 0 2   1 4 : 4 2   - - > 
+ 
  
