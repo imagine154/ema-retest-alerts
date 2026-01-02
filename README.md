@@ -6,6 +6,9 @@ Automated alert system that monitors Chartink.com EMA (Exponential Moving Averag
 
 - **Real-time Monitoring**: Tracks EMA20, EMA50, and EMA200 reversal patterns
 - **Smart Deduplication**: Only alerts for new stocks, prevents spam
+- **Market Hours Aware**: Runs only during NSE market hours (9:20 AM - 3:25 PM IST, Mon-Fri)
+- **Holiday Detection**: Automatically skips NSE trading holidays (15 holidays for 2026)
+- **Daily State Reset**: Clears state at end of day (3:20 PM+) for fresh alerts next day
 - **State Management**: Automatic cleanup of old entries (7-day retention)
 - **Retry Logic**: Handles network failures gracefully with 3 retries
 - **Comprehensive Logging**: Full observability for debugging and monitoring
@@ -164,6 +167,9 @@ MARKET_CLOSE_HOUR = 15        # 3 PM
 MARKET_CLOSE_MINUTE = 25      # 3:25 PM
 
 # NSE Trading Holidays: 15 holidays configured for 2026
+
+# Daily State Reset: Automatically clears at 3:20 PM+ (last run)
+# This ensures fresh alerts every trading day
 ```
 
 ## 📝 Logs

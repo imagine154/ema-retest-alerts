@@ -118,9 +118,18 @@ def load_state():
 def save_state(state):
     """Save state with error handling"""
     try:
-        with open(STATE_FILE, "w") as f:
-            json.dump(state, f, indent=2)
-        logger.info("State saved successfully")
+        # Check if this is the last run of the day
+        if is_last_run_of_day():
+            logger.info("🧹 Last run of the day - Clearing state for fresh start tomorrow")
+            # Save empty state to clear all entries
+            with open(STATE_FILE, "w") as f:
+                json.dump({}, f, indent=2)
+            logger.info("State cleared successfully - Ready for next trading day")
+        else:
+            # Normal save with current state
+            with open(STATE_FILE, "w") as f:
+                json.dump(state, f, indent=2)
+            logger.info("State saved successfully")
     except Exception as e:
         logger.error(f"Failed to save state: {e}")
 
