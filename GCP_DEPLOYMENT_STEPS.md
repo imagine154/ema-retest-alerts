@@ -607,11 +607,56 @@ Your EMA Retest Alerts system is now fully deployed and automated!
 
 ### Cost Estimate:
 
-- **Cloud Run**: $0.15-0.20/month
-- **Cloud Scheduler**: $0.10/month
-- **Secret Manager**: $0.06/month
-- **Cloud Build**: Free (120 min/day free tier)
-- **Total**: ~**$0.31-0.36/month**
+#### GCP Free Tier Breakdown:
+
+**Cloud Run (Always Free Tier):**
+- Free: 2 million requests/month
+- Free: 360,000 GB-seconds memory/month
+- Free: 180,000 vCPU-seconds/month
+- **Your usage**: ~2,880 requests/month (96/day × 30 days)
+- **Your memory**: ~9,600 GB-seconds/month (2 GB × 80 seconds × 60 runs)
+- **Your CPU**: ~9,600 vCPU-seconds/month
+- **Cost**: **$0.00** ✅ (Well within free tier!)
+
+**Cloud Scheduler:**
+- Free: 3 jobs
+- **Your usage**: 1 job
+- **Cost**: **$0.00** ✅ (Free tier!)
+
+**Secret Manager:**
+- Free: 6 active secret versions
+- $0.06 per secret version per month after that
+- **Your usage**: 2 secrets (bot token, chat ID)
+- **Cost**: **$0.00** ✅ (Within free tier!)
+
+**Cloud Build:**
+- Free: 120 build-minutes/day
+- **Your usage**: ~40 build-minutes/month (8 min/build × ~5 builds)
+- **Cost**: **$0.00** ✅ (Free tier!)
+
+**Container Registry Storage:**
+- Free: 0.5 GB storage
+- **Your usage**: ~200-300 MB (Docker images)
+- **Cost**: **$0.00** ✅ (Free tier!)
+
+**Networking (Egress):**
+- Free: 1 GB/month to worldwide destinations (excluding China & Australia)
+- **Your usage**: ~50-100 MB/month (API calls to Telegram)
+- **Cost**: **$0.00** ✅ (Free tier!)
+
+---
+
+#### **Total Monthly Cost: $0.00** 🎉
+
+**All services stay within GCP's Always Free tier!**
+
+**Note:** These are based on:
+- 96 executions/day (every 15 min, 6 hours × 4 times/hour)
+- ~80 seconds per execution (scraping 3 Chartink screens)
+- 2 GB memory, 2 vCPU per instance
+- 5 deployments/month (code updates)
+
+Your usage is approximately **5-10% of free tier limits** - extremely safe!
 
 ---
 
