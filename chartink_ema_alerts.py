@@ -365,5 +365,42 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    # Check if running in Cloud Run (has PORT environment variable)
+    port = os.environ.get("PORT")
+
+    if port:
+        # Running in Cloud Run - start HTTP server
+        from http.server import HTTPServer, BaseHTTPRequestHandler
+
+        class HealthCheckHandler(BaseHTTPRequestHandler):
+            def do_GET(self):
+                """Handle GET requests - run the main script"""
+                try:
+                    # Run the main script
+                    main()
+
+                    # Send success response
+                    self.send_response(200)
+                    self.send_header('Content-type', 'text/plain')
+                    self.end_headers()
+                    self.wfile.write(b'EMA Alerts script executed successfully\n')
+                except Exception as e:
+                    # Send error response
+                    logger.error(f"Error in HTTP handler: {e}", exc_info=True)
+                    self.send_response(500)
+                    self.send_header('Content-type', 'text/plain')
+                    self.end_headers()
+                    self.wfile.write(f'Error: {str(e)}\n'.encode())
+
+            def log_message(self, format, *args):
+                """Override to use our logger instead of stderr"""
+                logger.info("%s - - [%s] %s" % (self.address_string(), self.log_date_time_string(), format % args))
+
+        # Start HTTP server
+        server = HTTPServer(('0.0.0.0', int(port)), HealthCheckHandler)
+        logger.info(f"Starting HTTP server on port {port}")
+        server.serve_forever()
+    else:
+        # Running locally - just execute once
+        main()
 
