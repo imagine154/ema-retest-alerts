@@ -7,6 +7,10 @@ import pytz
 import logging
 import time
 from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeout
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Configure logging for GCP Cloud Logging compatibility
 logging.basicConfig(
@@ -17,9 +21,13 @@ logger = logging.getLogger(__name__)
 
 IST = pytz.timezone("Asia/Kolkata")
 
-# Load credentials from environment variables for security (fallback to hardcoded for local testing)
-TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "8163995879:AAHEnG-mAxont26F1mwUfOHGv-NJ1iZWkao")
-TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "-1002343316074")
+# Load credentials from environment variables
+TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
+TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID")
+
+# Validate required environment variables
+if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID:
+    raise ValueError("TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID must be set in environment variables or .env file")
 
 STATE_FILE = os.environ.get("STATE_FILE", "state.json")
 STATE_RETENTION_DAYS = 7  # Clear symbols older than this
@@ -97,6 +105,14 @@ def is_market_open():
     # Market is open
     logger.info(f"Market is open - Current time: {now.strftime('%H:%M:%S')}")
     return True
+
+
+def is_last_run_of_day():
+    """Check if this is the last run of the day (3:25 PM)"""
+    now = datetime.now(IST)
+    # Check if current time is at or after 3:25 PM (market close time)
+    market_close = now.replace(hour=MARKET_CLOSE_HOUR, minute=MARKET_CLOSE_MINUTE, second=0, microsecond=0)
+    return now >= market_close
 
 
 # ---------- STATE ----------
