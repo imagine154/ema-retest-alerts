@@ -35,5 +35,9 @@ images:
   - 'gcr.io/$PROJECT_ID/ema-retest-alerts:$COMMIT_SHA'
   - 'gcr.io/$PROJECT_ID/ema-retest-alerts:latest'
 
+# Use cloud logging when service account is specified
+options:
+  logging: CLOUD_LOGGING_ONLY
+
 timeout: '1200s'
 
