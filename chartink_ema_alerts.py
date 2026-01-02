@@ -24,6 +24,31 @@ TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "-1002343316074")
 STATE_FILE = os.environ.get("STATE_FILE", "state.json")
 STATE_RETENTION_DAYS = 7  # Clear symbols older than this
 
+# Market hours configuration (IST)
+MARKET_OPEN_HOUR = 9
+MARKET_OPEN_MINUTE = 20
+MARKET_CLOSE_HOUR = 15
+MARKET_CLOSE_MINUTE = 25
+
+# NSE Trading Holidays for 2026
+NSE_HOLIDAYS_2026 = [
+    datetime(2026, 1, 26, tzinfo=IST),   # Republic Day
+    datetime(2026, 3, 3, tzinfo=IST),    # Holi
+    datetime(2026, 3, 26, tzinfo=IST),   # Shri Ram Navami
+    datetime(2026, 3, 31, tzinfo=IST),   # Shri Mahavir Jayanti
+    datetime(2026, 4, 3, tzinfo=IST),    # Good Friday
+    datetime(2026, 4, 14, tzinfo=IST),   # Dr. Baba Saheb Ambedkar Jayanti
+    datetime(2026, 5, 1, tzinfo=IST),    # Maharashtra Day
+    datetime(2026, 5, 28, tzinfo=IST),   # Bakri Id
+    datetime(2026, 6, 26, tzinfo=IST),   # Muharram
+    datetime(2026, 9, 14, tzinfo=IST),   # Ganesh Chaturthi
+    datetime(2026, 10, 2, tzinfo=IST),   # Mahatma Gandhi Jayanti
+    datetime(2026, 10, 20, tzinfo=IST),  # Dussehra
+    datetime(2026, 11, 10, tzinfo=IST),  # Diwali-Balipratipada
+    datetime(2026, 11, 24, tzinfo=IST),  # Prakash Gurpurb Sri Guru Nanak Dev
+    datetime(2026, 12, 25, tzinfo=IST),  # Christmas
+]
+
 SCREENS = {
     "EMA20": "https://chartink.com/screener/stocks-are-touching-20-day-ema-and-reversing",
     "EMA50": "https://chartink.com/screener/stocks-are-touching-50-day-ema-and-reversing-2",
@@ -38,6 +63,40 @@ HEADERS = {
 
 MAX_RETRIES = 3
 RETRY_DELAY = 2  # seconds
+
+
+# ---------- MARKET HOURS ----------
+def is_market_open():
+    """Check if NSE market is currently open"""
+    now = datetime.now(IST)
+
+    # Check if it's a weekday (Monday=0, Sunday=6)
+    if now.weekday() >= 5:  # Saturday or Sunday
+        logger.info(f"Market closed: Weekend ({now.strftime('%A')})")
+        return False
+
+    # Check if it's a trading holiday
+    today = now.date()
+    for holiday in NSE_HOLIDAYS_2026:
+        if holiday.date() == today:
+            logger.info(f"Market closed: NSE Trading Holiday ({holiday.strftime('%d-%b-%Y')})")
+            return False
+
+    # Check if within market hours (9:20 AM to 3:25 PM IST)
+    market_open = now.replace(hour=MARKET_OPEN_HOUR, minute=MARKET_OPEN_MINUTE, second=0, microsecond=0)
+    market_close = now.replace(hour=MARKET_CLOSE_HOUR, minute=MARKET_CLOSE_MINUTE, second=0, microsecond=0)
+
+    if now < market_open:
+        logger.info(f"Market closed: Before market hours (opens at {market_open.strftime('%H:%M')})")
+        return False
+
+    if now > market_close:
+        logger.info(f"Market closed: After market hours (closed at {market_close.strftime('%H:%M')})")
+        return False
+
+    # Market is open
+    logger.info(f"Market is open - Current time: {now.strftime('%H:%M:%S')}")
+    return True
 
 
 # ---------- STATE ----------
@@ -238,6 +297,11 @@ def fetch_symbols(url):
 def main():
     """Main execution function with error handling and state management"""
     logger.info("=== Starting EMA Retest Alert Script ===")
+
+    # Check if market is open
+    if not is_market_open():
+        logger.info("Script execution skipped - Market is closed")
+        return
 
     try:
         now = datetime.now(IST).strftime("%H:%M")

@@ -120,6 +120,7 @@ gcloud run services add-iam-policy-binding ema-retest-alerts \
   --region asia-south1
 
 # Create scheduler (every 15 min, 9-3:30pm IST, Mon-Fri)
+# Note: Script internally validates 9:20 AM - 3:25 PM and skips holidays
 gcloud scheduler jobs create http ema-alerts-job \
   --location asia-south1 \
   --schedule "*/15 9-15 * * 1-5" \
@@ -152,9 +153,17 @@ gcloud scheduler jobs create http ema-alerts-job \
 ### Settings in Code
 
 ```python
-STATE_RETENTION_DAYS = 7  # Days to keep stock symbols in state
-MAX_RETRIES = 3           # Number of retry attempts
-RETRY_DELAY = 2           # Seconds between retries
+STATE_RETENTION_DAYS = 7      # Days to keep stock symbols in state
+MAX_RETRIES = 3               # Number of retry attempts
+RETRY_DELAY = 2               # Seconds between retries
+
+# Market Hours (IST)
+MARKET_OPEN_HOUR = 9          # 9 AM
+MARKET_OPEN_MINUTE = 20       # 9:20 AM
+MARKET_CLOSE_HOUR = 15        # 3 PM
+MARKET_CLOSE_MINUTE = 25      # 3:25 PM
+
+# NSE Trading Holidays: 15 holidays configured for 2026
 ```
 
 ## 📝 Logs

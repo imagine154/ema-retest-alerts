@@ -1,9 +1,10 @@
 # Cloud Scheduler job configuration
 # This is a reference configuration for creating a scheduled job
 
-# Job runs every 15 minutes during market hours (9:15 AM to 3:30 PM IST, Mon-Fri)
+# Job runs every 15 minutes during NSE market hours (9:20 AM to 3:25 PM IST, Mon-Fri)
+# Note: Script has built-in market hours and holiday checking
 name: ema-retest-alerts-scheduler
-schedule: "*/15 9-15 * * 1-5"
+schedule: "*/15 9-15 * * 1-5"  # Every 15 min, 9 AM-3 PM IST, Mon-Fri
 timeZone: "Asia/Kolkata"
 attemptDeadline: 300s
 
@@ -18,4 +19,9 @@ retryConfig:
   maxRetryDuration: 600s
   minBackoffDuration: 5s
   maxBackoffDuration: 60s
+
+# Note: The script internally checks:
+# - Market hours: 9:20 AM to 3:25 PM IST
+# - Weekends: Automatically skipped
+# - NSE holidays: 15 trading holidays for 2026
 
