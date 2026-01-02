@@ -1,0 +1,39 @@
+# GCP Cloud Run deployment configuration
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: ema-retest-alerts
+spec:
+  template:
+    metadata:
+      annotations:
+        # Set max instances to prevent excessive costs
+        autoscaling.knative.dev/maxScale: '1'
+        autoscaling.knative.dev/minScale: '0'
+    spec:
+      containerConcurrency: 1
+      timeoutSeconds: 300
+      containers:
+      - image: gcr.io/YOUR_PROJECT_ID/ema-retest-alerts:latest
+        env:
+        - name: TELEGRAM_BOT_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: telegram-bot-token
+              key: token
+        - name: TELEGRAM_CHAT_ID
+          valueFrom:
+            secretKeyRef:
+              name: telegram-chat-id
+              key: chat_id
+        resources:
+          limits:
+            memory: 512Mi
+            cpu: '1'
+        volumeMounts:
+        - name: state-volume
+          mountPath: /app/data
+      volumes:
+      - name: state-volume
+        emptyDir: {}
+

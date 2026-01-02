@@ -1,0 +1,41 @@
+# Git files
+.git
+.gitignore
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info
+dist
+build
+venv
+env
+
+# State and logs
+state.json
+*.log
+
+# Environment files
+.env
+.env.local
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# Documentation
+README.md
+docs/
+
+# Deployment configs (not needed in container)
+deployment.yaml
+cloudbuild.yaml
+
