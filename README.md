@@ -262,3 +262,6 @@ This tool is for informational purposes only. Always do your own research before
 
 **Built for GCP Cloud Run** • **Python 3.11+** • **Production Ready** • **Playwright Enabled**
 
+
+ < ! - -   D e p l o y e d   t o   G C P   o n   2 0 2 6 - 0 1 - 0 2   1 4 : 4 2   - - >  
+ 
