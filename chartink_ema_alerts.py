@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 import pytz
 import logging
 import time
+import html
 from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeout
 from dotenv import load_dotenv
 
@@ -202,7 +203,13 @@ def send_telegram(msg):
         except requests.exceptions.Timeout:
             logger.warning(f"Telegram request timeout (attempt {attempt + 1}/{MAX_RETRIES})")
         except requests.exceptions.RequestException as e:
-            logger.error(f"Telegram request failed (attempt {attempt + 1}/{MAX_RETRIES}): {e}")
+            error_detail = ""
+            try:
+                if hasattr(e, 'response') and e.response is not None:
+                    error_detail = f" - Response: {e.response.text}"
+            except:
+                pass
+            logger.error(f"Telegram request failed (attempt {attempt + 1}/{MAX_RETRIES}): {e}{error_detail}")
         except Exception as e:
             logger.error(f"Unexpected error sending Telegram message: {e}")
 
@@ -365,9 +372,12 @@ def main():
                     logger.info(f"New alert: {ema} - {s['symbol']}")
 
             if new_entries:
-                msg = f"📊 <b>{ema} Reversal Alert</b>\n🕒 {now}\n\n"
+                msg = f"📊 <b>{html.escape(ema)} Reversal Alert</b>\n🕒 {html.escape(str(now))}\n\n"
                 for s in new_entries:
-                    msg += f"<b>{s['symbol']}</b> | ₹{s['price']} | {s['pct']}\n"
+                    symbol = html.escape(str(s['symbol']))
+                    price = html.escape(str(s['price']))
+                    pct = html.escape(str(s['pct']))
+                    msg += f"<b>{symbol}</b> | ₹{price} | {pct}\n"
 
                 if send_telegram(msg):
                     total_new_alerts += len(new_entries)
