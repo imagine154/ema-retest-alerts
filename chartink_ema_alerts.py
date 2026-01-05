@@ -22,12 +22,15 @@ logger = logging.getLogger(__name__)
 IST = pytz.timezone("Asia/Kolkata")
 
 # Load credentials from environment variables
-TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
-TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID")
+# Strip whitespace, quotes, and newlines from environment variables
+TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "").strip().strip('"').strip("'").strip()
+TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "").strip().strip('"').strip("'").strip()
 
 # Validate required environment variables
 if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID:
     raise ValueError("TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID must be set in environment variables or .env file")
+
+logger.info(f"Bot token length: {len(TELEGRAM_BOT_TOKEN)}, Chat ID: {TELEGRAM_CHAT_ID}")
 
 STATE_FILE = os.environ.get("STATE_FILE", "state.json")
 STATE_RETENTION_DAYS = 7  # Clear symbols older than this
