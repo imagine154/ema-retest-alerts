@@ -23,9 +23,21 @@ logger = logging.getLogger(__name__)
 IST = pytz.timezone("Asia/Kolkata")
 
 # Load credentials from environment variables
-# Strip whitespace, quotes, and newlines from environment variables
-TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "").strip().strip('"').strip("'").strip()
-TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "").strip().strip('"').strip("'").strip()
+# Strip whitespace, quotes, newlines, and any extra characters from environment variables
+def clean_env_var(value):
+    """Clean environment variable by removing quotes, whitespace, and control characters"""
+    if not value:
+        return ""
+    # Strip whitespace and common quote characters
+    cleaned = value.strip().strip('"').strip("'").strip('`').strip()
+    # Remove any control characters (newlines, carriage returns, tabs, etc.)
+    cleaned = ''.join(char for char in cleaned if ord(char) >= 32 or char == '\n')
+    # Remove newlines specifically
+    cleaned = cleaned.replace('\n', '').replace('\r', '').replace('\t', '')
+    return cleaned.strip()
+
+TELEGRAM_BOT_TOKEN = clean_env_var(os.environ.get("TELEGRAM_BOT_TOKEN", ""))
+TELEGRAM_CHAT_ID = clean_env_var(os.environ.get("TELEGRAM_CHAT_ID", ""))
 
 # Validate required environment variables
 if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID:
@@ -62,9 +74,30 @@ NSE_HOLIDAYS_2026 = [
 ]
 
 SCREENS = {
-    "EMA20": "https://chartink.com/screener/stocks-are-touching-20-day-ema-and-reversing",
-    "EMA50": "https://chartink.com/screener/stocks-are-touching-50-day-ema-and-reversing-2",
-    "EMA200": "https://chartink.com/screener/stocks-are-touching-200-day-ema-and-reversing"
+    "EMA20_TOUCH": {
+        "url": "https://chartink.com/screener/stocks-are-touching-20-day-ema-and-reversing",
+        "label": "EMA20 Touch Alert"
+    },
+    "EMA20_REVERSAL": {
+        "url": "https://chartink.com/screener/stocks-reversing-from-20-day-ema",
+        "label": "EMA20 Reversal Alert"
+    },
+    "EMA50_TOUCH": {
+        "url": "https://chartink.com/screener/stocks-are-touching-50-day-ema-and-reversing-2",
+        "label": "EMA50 Touch Alert"
+    },
+    "EMA50_REVERSAL": {
+        "url": "https://chartink.com/screener/stocks-reversing-from-50-day-ema",
+        "label": "EMA50 Reversal Alert"
+    },
+    "EMA200_TOUCH": {
+        "url": "https://chartink.com/screener/stocks-are-touching-200-day-ema-and-reversing",
+        "label": "EMA200 Touch Alert"
+    },
+    "EMA200_REVERSAL": {
+        "url": "https://chartink.com/screener/stocks-reversing-from-200-day-ema",
+        "label": "EMA200 Reversal Alert"
+    }
 }
 
 HEADERS = {
@@ -285,11 +318,17 @@ def fetch_symbols(url):
                         # Format: [Index, Name, Symbol, Type, Percentage, Price, Volume, ...]
                         try:
                             symbol = cols[2].get_text(strip=True)  # Column 2: Symbol
+                            name = cols[1].get_text(strip=True)    # Column 1: Name
                             pct = cols[4].get_text(strip=True)     # Column 4: Percentage
                             price = cols[5].get_text(strip=True)   # Column 5: Price
 
-                            # Basic validation - symbol should be text, not empty
+                            # Filter out ETFs and validate symbol
                             if symbol and len(symbol) > 1 and not symbol.isdigit():
+                                # Check if "ETF" appears in the name (case insensitive)
+                                if "ETF" in name.upper():
+                                    logger.debug(f"Filtered out ETF: {symbol} ({name})")
+                                    continue
+
                                 results.append({
                                     "symbol": symbol,
                                     "price": price,
@@ -338,6 +377,7 @@ def main():
         logger.info("Script execution skipped - Market is closed")
         return
 
+
     try:
         now = datetime.now(IST).strftime("%H:%M")
         current_timestamp = datetime.now(IST).isoformat()
@@ -347,43 +387,80 @@ def main():
 
         total_new_alerts = 0
 
-        for ema, url in SCREENS.items():
-            logger.info(f"Processing {ema} screen...")
+        # Group screens by EMA type (EMA20, EMA50, EMA200)
+        ema_groups = {
+            "EMA20": ["EMA20_TOUCH", "EMA20_REVERSAL"],
+            "EMA50": ["EMA50_TOUCH", "EMA50_REVERSAL"],
+            "EMA200": ["EMA200_TOUCH", "EMA200_REVERSAL"]
+        }
 
-            try:
-                stocks = fetch_symbols(url)
-            except Exception as e:
-                logger.error(f"{ema} fetch failed: {e}", exc_info=True)
-                continue
+        for ema_name, screen_keys in ema_groups.items():
+            logger.info(f"Processing {ema_name} alerts (Touch + Reversal)...")
 
-            new_entries = []
+            # Collect alerts for both touch and reversal
+            touch_alerts = []
+            reversal_alerts = []
 
-            # Initialize state with dict format if needed
-            if ema not in state:
-                state[ema] = {}
-            elif isinstance(state[ema], list):
-                # Migrate old list format to dict
-                state[ema] = {}
+            for screen_key in screen_keys:
+                ema_config = SCREENS[screen_key]
+                ema_label = ema_config["label"]
+                ema_url = ema_config["url"]
 
-            for s in stocks:
-                if s["symbol"] not in state[ema]:
-                    new_entries.append(s)
-                    state[ema][s["symbol"]] = current_timestamp
-                    logger.info(f"New alert: {ema} - {s['symbol']}")
+                logger.info(f"  Fetching {ema_label}...")
 
-            if new_entries:
-                msg = f"📊 <b>{html.escape(ema)} Reversal Alert</b>\n🕒 {html.escape(str(now))}\n\n"
-                for s in new_entries:
-                    symbol = html.escape(str(s['symbol']))
-                    price = html.escape(str(s['price']))
-                    pct = html.escape(str(s['pct']))
-                    msg += f"<b>{symbol}</b> | ₹{price} | {pct}\n"
+                try:
+                    stocks = fetch_symbols(ema_url)
+                except Exception as e:
+                    logger.error(f"{ema_label} fetch failed: {e}", exc_info=True)
+                    continue
+
+                # Initialize state with dict format if needed
+                if screen_key not in state:
+                    state[screen_key] = {}
+                elif isinstance(state[screen_key], list):
+                    state[screen_key] = {}
+
+                # Find new entries
+                new_entries = []
+                for s in stocks:
+                    if s["symbol"] not in state[screen_key]:
+                        new_entries.append(s)
+                        state[screen_key][s["symbol"]] = current_timestamp
+                        logger.info(f"  New alert: {ema_label} - {s['symbol']}")
+
+                # Categorize by touch or reversal
+                if "TOUCH" in screen_key:
+                    touch_alerts = new_entries
+                elif "REVERSAL" in screen_key:
+                    reversal_alerts = new_entries
+
+            # Send combined message if there are any alerts for this EMA
+            if touch_alerts or reversal_alerts:
+                msg = f"📊 <b>{html.escape(ema_name)} Alerts</b>\n🕒 {html.escape(str(now))}\n\n"
+
+                if touch_alerts:
+                    msg += f"<b>🔵 Touch Alert</b>\n"
+                    for s in touch_alerts:
+                        symbol = html.escape(str(s['symbol']))
+                        price = html.escape(str(s['price']))
+                        pct = html.escape(str(s['pct']))
+                        msg += f"  <b>{symbol}</b> | ₹{price} | {pct}\n"
+                    msg += "\n"
+
+                if reversal_alerts:
+                    msg += f"<b>🟢 Reversal Alert</b>\n"
+                    for s in reversal_alerts:
+                        symbol = html.escape(str(s['symbol']))
+                        price = html.escape(str(s['price']))
+                        pct = html.escape(str(s['pct']))
+                        msg += f"  <b>{symbol}</b> | ₹{price} | {pct}\n"
 
                 if send_telegram(msg):
-                    total_new_alerts += len(new_entries)
-                    logger.info(f"Sent {len(new_entries)} alerts for {ema}")
+                    alert_count = len(touch_alerts) + len(reversal_alerts)
+                    total_new_alerts += alert_count
+                    logger.info(f"Sent {alert_count} alerts for {ema_name} (Touch: {len(touch_alerts)}, Reversal: {len(reversal_alerts)})")
             else:
-                logger.info(f"No new alerts for {ema}")
+                logger.info(f"No new alerts for {ema_name}")
 
         save_state(state)
         logger.info(f"=== Script completed. Total new alerts: {total_new_alerts} ===")
