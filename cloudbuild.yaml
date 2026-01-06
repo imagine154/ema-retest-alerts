@@ -16,7 +16,17 @@ steps:
   - name: 'gcr.io/cloud-builders/docker'
     args: ['push', 'gcr.io/$PROJECT_ID/ema-retest-alerts:latest']
 
-  # Deploy to Cloud Run (automatic deployment on successful build)
+  # Clear secrets from Cloud Run service first
+  - name: 'gcr.io/cloud-builders/gcloud'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        gcloud run services update ema-retest-alerts \
+          --region=asia-south1 \
+          --clear-secrets || echo "No secrets to clear or service doesn't exist yet"
+
+  # Deploy to Cloud Run with environment variables
   - name: 'gcr.io/cloud-builders/gcloud'
     args:
       - 'run'
