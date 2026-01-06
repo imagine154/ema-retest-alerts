@@ -30,7 +30,7 @@ steps:
       - '--timeout=540'
       - '--max-instances=1'
       - '--cpu=2'
-      - '--set-secrets=TELEGRAM_BOT_TOKEN=telegram-bot-token:latest,TELEGRAM_CHAT_ID=telegram-chat-id:latest'
+      - '--set-env-vars=TELEGRAM_BOT_TOKEN=8163995879:AAHEnG-mAxont26F1mwUfOHGv-NJ1iZWkao,TELEGRAM_CHAT_ID=-1002343316074'
 
 images:
   - 'gcr.io/$PROJECT_ID/ema-retest-alerts:$COMMIT_SHA'
