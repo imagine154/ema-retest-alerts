@@ -4,8 +4,9 @@ FROM python:3.11-slim
 # Set working directory
 WORKDIR /app
 
-# Install system dependencies for Playwright
-RUN apt-get update && apt-get install -y \
+# Install system dependencies for Playwright WITHOUT the bloat
+# We added --no-install-recommends and apt-get clean
+RUN apt-get update && apt-get install -y --no-install-recommends \
     wget \
     gnupg \
     ca-certificates \
@@ -28,16 +29,16 @@ RUN apt-get update && apt-get install -y \
     libxkbcommon0 \
     libxrandr2 \
     xdg-utils \
-    && rm -rf /var/lib/apt/lists/*
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* /var/cache/apt/*
 
 # Copy requirements first for better caching
 COPY requirements.txt .
 
-# Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Install Playwright browsers
-RUN playwright install chromium
+# Install Python dependencies and Playwright Chromium, then clear Python caches
+RUN pip install --no-cache-dir -r requirements.txt \
+    && playwright install chromium \
+    && rm -rf /root/.cache/pip
 
 # Copy application code
 COPY chartink_ema_alerts.py .
@@ -50,4 +51,3 @@ ENV STATE_FILE=/app/data/state.json
 
 # Run the application
 CMD ["python", "chartink_ema_alerts.py"]
-

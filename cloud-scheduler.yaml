@@ -4,7 +4,7 @@
 # Job runs every 15 minutes during NSE market hours (9:20 AM to 3:25 PM IST, Mon-Fri)
 # Note: Script has built-in market hours and holiday checking
 name: ema-retest-alerts-scheduler
-schedule: "*/15 9-15 * * 1-5"  # Every 15 min, 9 AM-3 PM IST, Mon-Fri
+schedule: "*/30 9-15 * * 1-5"  # Every 15 min, 9 AM-3 PM IST, Mon-Fri
 timeZone: "Asia/Kolkata"
 attemptDeadline: 300s
 
