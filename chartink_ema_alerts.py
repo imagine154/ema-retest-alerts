@@ -320,7 +320,7 @@ def fetch_symbols(url):
                             symbol = cols[2].get_text(strip=True)  # Column 2: Symbol
                             name = cols[1].get_text(strip=True)    # Column 1: Name
                             pct = cols[4].get_text(strip=True)     # Column 4: Percentage
-                            price = cols[5].get_text(strip=True)   # Column 5: Price
+                            price = cols[3].get_text(strip=True)   # Column 5: Price
 
                             # Filter out ETFs and validate symbol
                             if symbol and len(symbol) > 1 and not symbol.isdigit():
